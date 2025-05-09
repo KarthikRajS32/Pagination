@@ -78,16 +78,35 @@
 </table>
 
 <!-- Pagination -->
-<div class="flex gap-2 mt-4 justify-center">
+<div class="flex gap-2 mt-4 justify-center items-center">
+  <!-- Previous Button -->
+  <button
+    class="px-3 py-1 rounded text-blue-400 font-bold cursor-pointer"
+    on:click={() => goToPage(currentPage - 1)}
+    disabled={currentPage === 1}
+  >
+    ←Previous
+  </button>
+
+  <!-- Page Number Buttons -->
   {#each Array(totalPages) as _, index}
     <button
-      class="px-3 py-1 rounded bg-blue-500 text-white hover:bg-blue-600"
+      class="px-3 py-1 rounded bg-blue-400 text-white hover:bg-blue-500 cursor-pointer"
       on:click={() => goToPage(index + 1)}
       class:selected={currentPage === index + 1}
     >
       {index + 1}
     </button>
   {/each}
+
+  <!-- Next Button -->
+  <button
+    class="px-3 py-1 rounded text-blue-400 font-bold cursor-pointer"
+    on:click={() => goToPage(currentPage + 1)}
+    disabled={currentPage === totalPages}
+  >
+    Next→
+  </button>
 </div>
 
 <style>
