@@ -1,11 +1,9 @@
 <script>
-  // Sample data
   const columns = [
     { title: 'ID', key: 'id' },
     { title: 'Name', key: 'name' },
     { title: 'Age', key: 'age' },
-    { title: 'Country', key: 'country'},
-
+    { title: 'Country', key: 'country' },
   ];
 
   const allRows = [
@@ -45,9 +43,31 @@
 
   let currentPage = 1;
   const rowsPerPage = 10;
-  const totalPages =Math.ceil(allRows.length / rowsPerPage);
+  let searchTerm = '';
+  let sortKey = '';
+  let sortOrder = 'asc'; // or 'desc'
 
-  $: paginatedRows = allRows.slice(
+  // Filter rows by search term
+  $: filteredRows = allRows.filter(row =>
+    Object.values(row).some(value =>
+      String(value).toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  );
+
+  // Sort filtered rows
+  $: sortedRows = [...filteredRows].sort((a, b) => {
+    if (!sortKey) return 0;
+    const valA = a[sortKey];
+    const valB = b[sortKey];
+    if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
+    if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  $: totalPages = Math.ceil(sortedRows.length / rowsPerPage);
+
+  // Paginate sorted rows
+  $: paginatedRows = sortedRows.slice(
     (currentPage - 1) * rowsPerPage,
     currentPage * rowsPerPage
   );
@@ -55,14 +75,38 @@
   function goToPage(page) {
     currentPage = page;
   }
+
+  function handleSort(key) {
+    if (sortKey === key) {
+      sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+    } else {
+      sortKey = key;
+      sortOrder = 'asc';
+    }
+  }
 </script>
 
-<!-- Table Component -->
+<!-- 🔍 Search Input -->
+<div class="mb-4">
+  <input
+    type="text"
+    bind:value={searchTerm}
+    placeholder="Search..."
+    class="px-4 py-2 border rounded w-full max-w-md"
+  />
+</div>
+
+<!-- 📋 Table -->
 <table class="table-auto w-full h-full justify-center items-center text-center">
   <thead>
     <tr>
-      {#each columns as { title }}
-        <th class="px-4 py-2">{title}</th>
+      {#each columns as { title, key }}
+        <th class="px-4 py-2 cursor-pointer" on:click={() => handleSort(key)}>
+          {title}
+          {#if sortKey === key}
+            {sortOrder === 'asc' ? ' 🔼' : ' 🔽'}
+          {/if}
+        </th>
       {/each}
     </tr>
   </thead>
@@ -74,12 +118,16 @@
         {/each}
       </tr>
     {/each}
+    {#if paginatedRows.length === 0}
+      <tr>
+        <td colspan={columns.length} class="py-4 text-gray-500">No matching data</td>
+      </tr>
+    {/if}
   </tbody>
 </table>
 
-<!-- Pagination -->
+<!-- ⏪ Pagination -->
 <div class="flex gap-2 mt-4 justify-center items-center">
-  <!-- Previous Button -->
   <button
     class="px-3 py-1 rounded text-blue-400 font-bold cursor-pointer"
     on:click={() => goToPage(currentPage - 1)}
@@ -88,7 +136,6 @@
     ←Previous
   </button>
 
-  <!-- Page Number Buttons -->
   {#each Array(totalPages) as _, index}
     <button
       class="px-3 py-1 rounded bg-blue-400 text-white hover:bg-blue-500 cursor-pointer"
@@ -99,7 +146,6 @@
     </button>
   {/each}
 
-  <!-- Next Button -->
   <button
     class="px-3 py-1 rounded text-blue-400 font-bold cursor-pointer"
     on:click={() => goToPage(currentPage + 1)}
@@ -111,7 +157,7 @@
 
 <style>
   button.selected {
-    background-color: #1d4ed8; /* Darker blue */
+    background-color: #1d4ed8;
     font-weight: bold;
   }
 </style>
